@@ -14,11 +14,11 @@ export async function POST(req: Request) {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  const body = await req.json();
+  const payload = await req.json();
 
   const { error } = await supabase
     .from("security_events")
-    .insert([body]);
+    .insert([payload]);
 
   if (error) {
     return NextResponse.json({ error }, { status: 500 });
@@ -26,4 +26,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true });
 }
+
 
