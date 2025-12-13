@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/validateApiKey";
 import { incrementUsage } from "@/lib/incrementUsage";
@@ -6,7 +5,6 @@ import { USAGE_LIMITS } from "@/lib/usageLimits";
 
 export async function POST(req: Request) {
   try {
-    // 1️⃣ Authorization header
     const auth = req.headers.get("authorization");
     if (!auth?.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -17,7 +15,6 @@ export async function POST(req: Request) {
 
     const apiKey = auth.slice(7);
 
-    // 2️⃣ Validate API key + scope
     const keyData = await validateApiKey(apiKey, "events:write");
     if (!keyData) {
       return NextResponse.json(
@@ -26,7 +23,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3️⃣ Usage metering
     const routePath = "/api/swarm-lock/event/write";
     const plan = keyData.plan ?? "free";
 
@@ -46,7 +42,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4️⃣ Success response
     return NextResponse.json(
       {
         ok: true,
