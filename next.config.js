@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config) => config,
+  // Explicitly disable Turbopack
+  turbopack: false,
+
+  webpack: (config) => {
+    return config;
+  },
 };
 
 module.exports = nextConfig;
