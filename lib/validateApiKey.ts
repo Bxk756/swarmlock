@@ -1,25 +1,37 @@
 import crypto from "crypto";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabase } from "./supabase";
 
 export async function validateApiKey(rawKey: string) {
-  if (!rawKey.startsWith("sk_live_swarm_")) return null;
+  if (!rawKey) return null;
 
-  const hash = crypto.createHash("sha256").update(rawKey).digest("hex");
+  const hash = crypto
+    .createHash("sha256")
+    .update(rawKey)
+    .digest("hex");
 
-  const { data } = await supabase
+  // 1️⃣ Validate key exists
+  const { data: key } = await supabase
     .from("api_keys")
-    .select("customer_id")
+    .select("id, customer_id")
     .eq("key_hash", hash)
     .eq("active", true)
     .single();
 
-  return data?.customer_id || null;
+  if (!key) return null;
+
+  // 2️⃣ Enforce rate limit
+  const { data: allowed } = await supabase.rpc(
+    "enforce_rate_limit",
+    { p_key_hash: hash }
+  );
+
+  if (!allowed) {
+    throw new Error("RATE_LIMIT_EXCEEDED");
+  }
+
+  return key.customer_id;
 }
+
 
 
 
