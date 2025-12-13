@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { supabaseServer } from "./supabase";
+import { supabaseServer } from "./supabase/server";
 
 export async function validateApiKey(
   rawKey: string,
@@ -30,11 +30,12 @@ export async function validateApiKey(
   }
 
   return {
-    id: key.id,               // <-- matches usage metering
-    projectId: key.project_id,
-    scopes: key.scopes ?? [],
+    id: key.id,                 // ✅ used by incrementUsage
+    projectId: key.project_id,  // ✅ project scoping
+    scopes: key.scopes ?? [],   // ✅ future-proof
   };
 }
+ 
 
 
 
