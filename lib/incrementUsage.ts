@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export async function incrementUsage(
   apiKeyId: string,
@@ -8,23 +8,15 @@ export async function incrementUsage(
   windowStart.setUTCMinutes(0, 0, 0); // hourly window
 
   const { data, error } = await supabaseServer
-    .from("api_usage")
-    .upsert(
-      {
-        api_key_id: apiKeyId,
-        route,
-        window_start: windowStart.toISOString(),
-        request_count: 1,
-      },
-      {
-        onConflict: "api_key_id,route,window_start",
-        ignoreDuplicates: false,
-      }
-    )
-    .select("request_count")
+    .rpc("increment_api_usage", {
+      p_api_key_id: apiKeyId,
+      p_route: route,
+      p_window_start: windowStart.toISOString(),
+    })
     .single();
 
   if (error) throw error;
 
   return data.request_count;
 }
+
