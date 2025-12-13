@@ -1,30 +1,48 @@
 import { NextResponse } from "next/server";
+import { validateApiKey } from "@/lib/validateApiKey";
 import { createClient } from "@supabase/supabase-js";
 
-export async function POST(req: Request) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-  if (!supabaseUrl || !serviceRoleKey) {
+export async function POST(req: Request) {
+  // 1️⃣ Read Authorization header
+  const auth = req.headers.get("authorization");
+
+  if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json(
-      { error: "Supabase environment variables missing" },
-      { status: 500 }
+      { error: "Missing API key" },
+      { status: 401 }
     );
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  // 2️⃣ Extract raw key
+  const apiKey = auth.replace("Bearer ", "").trim();
 
-  const payload = await req.json();
+  // 3️⃣ Validate key
+  const customerId = await validateApiKey(apiKey);
 
-  const { error } = await supabase
-    .from("security_events")
-    .insert([payload]);
-
-  if (error) {
-    return NextResponse.json({ error }, { status: 500 });
+  if (!customerId) {
+    return NextResponse.json(
+      { error: "Invalid API key" },
+      { status: 401 }
+    );
   }
 
-  return NextResponse.json({ success: true });
+  // 4️⃣ Parse payload
+  const payload = await req.json();
+  const blocked = payload.blocked === true;
+
+  // 5️⃣ Secure server-side RPC
+  await supabase.rpc("increment_swarm_stats", { blocked });
+
+  return NextResponse.json({
+    ok: true,
+    customer: customerId,
+  });
 }
 
 
+  
