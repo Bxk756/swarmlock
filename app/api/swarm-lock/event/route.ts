@@ -6,20 +6,27 @@ export async function POST(req: Request) {
     const auth = req.headers.get("authorization");
     const apiKey = auth?.replace("Bearer ", "");
 
-    const customerId = await validateApiKey(apiKey || "");
+    const keyData = await validateApiKey(apiKey || "");
 
-    if (!customerId) {
+    if (!keyData) {
       return NextResponse.json(
         { error: "Invalid API key" },
         { status: 401 }
       );
     }
 
-    // process request…
-    return NextResponse.json({ ok: true });
+    const { projectId, apiKeyId } = keyData;
+
+    // ✅ process request scoped to projectId
+    // example: log event, increment stats, etc.
+
+    return NextResponse.json({
+      ok: true,
+      projectId,
+    });
 
   } catch (err: any) {
-    if (err.message === "RATE_LIMIT_EXCEEDED") {
+    if (err?.message === "RATE_LIMIT_EXCEEDED") {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
         { status: 429 }
@@ -29,7 +36,6 @@ export async function POST(req: Request) {
     throw err;
   }
 }
-
 
 
 
