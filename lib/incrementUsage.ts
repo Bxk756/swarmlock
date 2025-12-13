@@ -1,4 +1,8 @@
 import { supabaseServer } from "@/lib/supabase/server";
+<<<<<<< HEAD
+=======
+
+>>>>>>> f52938b (Add Supabase client/server split)
 
 export async function incrementUsage(
   apiKeyId: string,
