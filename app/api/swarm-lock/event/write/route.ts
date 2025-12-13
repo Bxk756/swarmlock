@@ -15,7 +15,6 @@ export async function POST(req: Request) {
 
     const apiKey = auth.slice(7);
 
-    // 🔐 Validate key + scope
     const keyData = await validateApiKey(apiKey, "events:write");
     if (!keyData) {
       return NextResponse.json(
@@ -24,9 +23,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // 📊 Usage metering
     const routePath = "/api/swarm-lock/event/write";
-    const plan = "free"; // ✅ TEMP until Stripe/billing is added
+    const plan = "free"; // ✅ TEMP until billing exists
 
     const used = await incrementUsage(keyData.id, routePath);
     const limit = USAGE_LIMITS[plan][routePath];
@@ -68,4 +66,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
