@@ -1,15 +1,15 @@
-import crypto from "crypto";
+const { rawKey, hash } = generateApiKey();
 
-export function generateApiKey() {
-  const rawKey = `sk_live_swarm_${crypto.randomBytes(24).toString("hex")}`;
+await supabase
+  .from("api_keys")
+  .insert({
+    user_id,
+    project_id,
+    name: "Production Key",
+    hashed_key: hash,
+    active: true,
+  });
 
-  const hash = crypto
-    .createHash("sha256")
-    .update(rawKey)
-    .digest("hex");
+// Return rawKey ONCE
+return { apiKey: rawKey };
 
-  return {
-    rawKey,   // show once to customer
-    hash,     // store in DB
-  };
-}
