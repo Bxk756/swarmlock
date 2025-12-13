@@ -1,0 +1,12 @@
+# Next.js build output
+.next
+build
+out
+
+# Node
+node_modules
+
+# Env files
+.env
+.env.local
+.env.production
