@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   }
 
   // generateApiKey should return: { rawKey, hashedKey }
-  const { rawKey, hashedKey } = await generateApiKey();
+  const { rawKey, hash } = await generateApiKey();
 
   const { data, error } = await supabaseServer
     .from("api_keys")
