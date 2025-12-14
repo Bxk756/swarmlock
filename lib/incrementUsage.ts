@@ -22,7 +22,6 @@ export async function incrementUsage(
   if (error) throw error;
   if (!data) throw new Error("No data returned from increment_api_usage");
 
-  const result = data as IncrementUsageResult;
-
-  return result.request_count;
+  return (data as IncrementUsageResult).request_count;
 }
+
