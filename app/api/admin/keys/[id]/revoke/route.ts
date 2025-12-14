@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
-import { requireAdmin } from "../../_auth";
+import { supabaseServer } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/_auth";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const denied = requireAdmin(req);
