@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
-import { requireAdmin } from "../_auth";
+import { NextResponse, NextRequest } from "next/server";
+import { supabaseServer } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/_auth";
 import { generateApiKey } from "@/lib/generateApiKey";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
@@ -18,12 +18,14 @@ export async function GET(req: Request) {
   if (projectId) q = q.eq("project_id", projectId);
 
   const { data, error } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ keys: data ?? [] });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
@@ -32,11 +34,14 @@ export async function POST(req: Request) {
   const scopes = Array.isArray(body.scopes) ? body.scopes : ["events:write"];
 
   if (!projectId) {
-    return NextResponse.json({ error: "projectId required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "projectId required" },
+      { status: 400 }
+    );
   }
 
-  // generateApiKey should return: { rawKey, hashedKey }
-  const { rawKey, hash } = await generateApiKey();
+  // Option B: generateApiKey returns { rawKey, hashedKey }
+  const { rawKey, hashedKey } = await generateApiKey();
 
   const { data, error } = await supabaseServer
     .from("api_keys")
@@ -49,7 +54,9 @@ export async function POST(req: Request) {
     .select("id, project_id, active, scopes, created_at")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   // IMPORTANT: rawKey is only returned once
   return NextResponse.json({ key: data, rawKey });
