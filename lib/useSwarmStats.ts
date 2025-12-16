@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabaseClient } from "./supabase";
+import { supabaseClient } from "./supabase/client";
 
 export function useSwarmStats() {
   const [stats, setStats] = useState({ total: 0, blocked: 0 });

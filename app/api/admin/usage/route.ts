@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/_auth";
 
-export async function GET(req: Request) {
-  const denied = requireAdmin(req);
-  if (denied) return denied;
-
+export async function GET() {
   const supabase = getSupabaseServer();
 
   const { data, error } = await supabase
-    .from("api_usage")
+    .from("usage_logs")
     .select("*")
-    .order("window_start", { ascending: false })
-    .limit(100);
+    .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
