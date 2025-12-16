@@ -21,11 +21,15 @@ export async function POST() {
       .update(rawKey)
       .digest("hex");
 
-    // 3. Insert into database (MATCH DB COLUMN NAME)
+    // 3. Derive last 4 characters for display
+    const lastFour = rawKey.slice(-4);
+
+    // 4. Insert into database (MATCH SCHEMA)
     const { error } = await supabase
       .from("api_keys")
       .insert({
         hashed_key: hashedKey,
+        last_four: lastFour,
         revoked: false,
       });
 
@@ -36,9 +40,10 @@ export async function POST() {
       );
     }
 
-    // 4. Return raw key ONCE
+    // 5. Return raw key ONCE
     return NextResponse.json({
       apiKey: rawKey,
+      lastFour,
       warning: "Store this key securely. It will not be shown again.",
     });
   } catch (err) {
@@ -56,7 +61,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("api_keys")
-      .select("id, name, revoked, created_at")
+      .select("id, name, last_four, revoked, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
