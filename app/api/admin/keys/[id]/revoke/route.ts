@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
-import { requireAdmin } from "../../../../lib/_auth";
+import { requireAdmin } from "@/lib/_auth";
 
 export async function POST(
   req: NextRequest,
@@ -22,4 +22,3 @@ export async function POST(
 
   return NextResponse.json({ ok: true });
 }
-
