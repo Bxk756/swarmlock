@@ -3,11 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 export const supabaseServer = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
-<<<<<<< HEAD
-  { auth: { persistSession: false } }
-=======
   {
-    auth: { persistSession: false },
+    auth: {
+      persistSession: false,
+    },
   }
->>>>>>> f52938b (Add Supabase client/server split)
 );
