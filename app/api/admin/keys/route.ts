@@ -12,20 +12,20 @@ export async function POST() {
   try {
     const supabase = getSupabaseServer();
 
-    // 1. Generate raw API key (prefix helps identify product)
+    // 1. Generate raw API key
     const rawKey = `swarm_${crypto.randomBytes(32).toString("hex")}`;
 
-    // 2. Hash the key (never store raw key)
-    const keyHash = crypto
+    // 2. Hash the key (SHA-256)
+    const hashedKey = crypto
       .createHash("sha256")
       .update(rawKey)
       .digest("hex");
 
-    // 3. Insert into database
+    // 3. Insert into database (MATCH DB COLUMN NAME)
     const { error } = await supabase
       .from("api_keys")
       .insert({
-        key_hash: keyHash,
+        hashed_key: hashedKey,
         revoked: false,
       });
 
@@ -56,7 +56,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("api_keys")
-      .select("id, revoked, created_at")
+      .select("id, name, revoked, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
