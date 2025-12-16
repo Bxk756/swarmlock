@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/_auth";
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
-  const { id } = await context.params;
+  const supabase = getSupabaseServer();
 
-  const { error } = await supabaseServer
+  const { error } = await supabase
     .from("api_keys")
     .update({ active: false })
-    .eq("id", id);
+    .eq("id", params.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -22,3 +22,5 @@ export async function POST(
 
   return NextResponse.json({ ok: true });
 }
+
+  
