@@ -8,10 +8,11 @@ export type ApiKeyRecord = {
 };
 
 /**
- * Validates an incoming API key.
- * Returns the API key record if valid, otherwise null.
+ * Validate an incoming API key
  */
-export async function validateApiKey(rawKey: string): Promise<ApiKeyRecord | null> {
+export async function validateApiKey(
+  rawKey: string
+): Promise<ApiKeyRecord | null> {
   if (!rawKey) return null;
 
   const supabase = getSupabaseServer();
@@ -38,7 +39,6 @@ export async function validateApiKey(rawKey: string): Promise<ApiKeyRecord | nul
 
   return data;
 }
-
 
 
 

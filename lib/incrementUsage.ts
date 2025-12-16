@@ -5,7 +5,7 @@ export type IncrementUsageResult = {
 };
 
 /**
- * Increments API usage for a given API key
+ * Increment API usage for a given API key
  */
 export async function incrementUsage(
   apiKeyId: string
