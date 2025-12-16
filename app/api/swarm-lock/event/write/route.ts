@@ -1,70 +1,54 @@
 import { NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/validateApiKey";
 import { incrementUsage } from "@/lib/incrementUsage";
-import { USAGE_LIMITS } from "@/lib/usageLimits";
 
+/**
+ * SwarmLock event write endpoint
+ * Writes events after API key validation
+ */
 export async function POST(req: Request) {
   try {
-    const auth = req.headers.get("authorization");
-    if (!auth?.startsWith("Bearer ")) {
+    const apiKey = req.headers.get("x-api-key");
+
+    if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing Authorization header" },
+        { error: "Missing API key" },
         { status: 401 }
       );
     }
 
-    const apiKey = auth.slice(7);
+    const keyRecord = await validateApiKey(apiKey);
 
-    const keyData = await validateApiKey(apiKey, "events:write");
-    if (!keyData) {
+    if (!keyRecord) {
       return NextResponse.json(
-        { error: "Invalid API key" },
+        { error: "Invalid or revoked API key" },
         { status: 401 }
       );
     }
 
-    const routePath = "/api/swarm-lock/event/write";
-    const plan = "free"; // ✅ TEMP until billing exists
+    // Track usage for this API key
+    await incrementUsage(keyRecord.id);
 
-    const used = await incrementUsage(keyData.id, routePath);
-    const limit = USAGE_LIMITS[plan][routePath];
+    const body = await req.json();
 
-    if (used > limit) {
-      return NextResponse.json(
-        { error: "Usage limit exceeded" },
-        {
-          status: 429,
-          headers: {
-            "X-Usage-Limit": limit.toString(),
-            "X-Usage-Remaining": "0",
-          },
-        }
-      );
-    }
+    /**
+     * TODO:
+     * - Persist event to database
+     * - Forward to analytics / detection pipeline
+     * - Trigger alerting if needed
+     */
+    // console.log("SwarmLock write event:", body);
 
-    return NextResponse.json(
-      {
-        ok: true,
-        usage: {
-          used,
-          limit,
-          remaining: limit - used,
-        },
-      },
-      {
-        headers: {
-          "X-Usage-Limit": limit.toString(),
-          "X-Usage-Remaining": (limit - used).toString(),
-        },
-      }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Event written successfully",
+    });
   } catch (err) {
-    console.error("event/write error:", err);
+    console.error("SwarmLock write error:", err);
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
-
-

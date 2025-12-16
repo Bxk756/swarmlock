@@ -1,39 +1,43 @@
 import crypto from "crypto";
-import { supabaseServer } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 
-export async function validateApiKey(
-  rawKey: string,
-  requiredScope?: string
-) {
+export type ApiKeyRecord = {
+  id: string;
+  key_hash: string;
+  revoked: boolean;
+};
+
+/**
+ * Validates an incoming API key.
+ * Returns the API key record if valid, otherwise null.
+ */
+export async function validateApiKey(rawKey: string): Promise<ApiKeyRecord | null> {
   if (!rawKey) return null;
 
-  const hash = crypto
+  const supabase = getSupabaseServer();
+
+  const hashedKey = crypto
     .createHash("sha256")
     .update(rawKey)
     .digest("hex");
 
-  const { data: key, error } = await supabaseServer
+  const { data, error } = await supabase
     .from("api_keys")
-    .select("id, project_id, scopes")
-    .eq("hashed_key", hash)
-    .eq("active", true)
-    .single();
+    .select("id, key_hash, revoked")
+    .eq("key_hash", hashedKey)
+    .single<ApiKeyRecord>();
 
-  if (error || !key) return null;
-
-  if (requiredScope) {
-    const scopes: string[] = key.scopes ?? [];
-    if (!scopes.includes(requiredScope)) return null;
+  if (error) {
+    console.error("validateApiKey error:", error);
+    return null;
   }
 
-  return {
-    id: key.id,
-    projectId: key.project_id,
-    scopes: key.scopes ?? [],
-  };
-}
+  if (!data || data.revoked) {
+    return null;
+  }
 
- 
+  return data;
+}
 
 
 

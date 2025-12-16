@@ -1,55 +1,52 @@
-import { validateApiKey } from "@/lib/validateApiKey";
 import { NextResponse } from "next/server";
+import { validateApiKey } from "@/lib/validateApiKey";
+import { incrementUsage } from "@/lib/incrementUsage";
 
+/**
+ * SwarmLock event ingestion endpoint
+ * Protected by API key
+ */
 export async function POST(req: Request) {
   try {
-    // 1️⃣ Read Authorization header
-    const auth = req.headers.get("authorization");
-    if (!auth?.startsWith("Bearer ")) {
+    const apiKey = req.headers.get("x-api-key");
+
+    if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing Authorization header" },
+        { error: "Missing API key" },
         { status: 401 }
       );
     }
 
-    const apiKey = auth.slice(7);
+    const keyRecord = await validateApiKey(apiKey);
 
-    // 2️⃣ Validate API key (no scope required for this route)
-    const keyData = await validateApiKey(apiKey);
-    if (!keyData) {
+    if (!keyRecord) {
       return NextResponse.json(
-        { error: "Invalid API key" },
+        { error: "Invalid or revoked API key" },
         { status: 401 }
       );
     }
 
-    // 3️⃣ ✅ FIX: alias `id` → `apiKeyId`
-    const { projectId, id: apiKeyId } = keyData;
+    // Increment usage for this API key
+    await incrementUsage(keyRecord.id);
 
-    // 4️⃣ Process request scoped to projectId
-    // (example: log event, increment stats, etc.)
+    const payload = await req.json();
+
+    // TODO: process event payload (store, analyze, forward, etc.)
+    // console.log("SwarmLock event:", payload);
 
     return NextResponse.json({
-      ok: true,
-      projectId,
-      apiKeyId,
+      success: true,
+      message: "Event received",
     });
-  } catch (err: any) {
-    if (err?.message === "RATE_LIMIT_EXCEEDED") {
-      return NextResponse.json(
-        { error: "Rate limit exceeded" },
-        { status: 429 }
-      );
-    }
+  } catch (err) {
+    console.error("SwarmLock event error:", err);
 
-    console.error("event route error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
-
 
 
 
